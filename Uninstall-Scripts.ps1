@@ -46,6 +46,11 @@ Begin
 Process
 {	
 	Remove-PathFromProfile -PathVariable 'Path' -Path (Get-Location).Path
+	
+	Remove-AliasFromProfile -Script 'Update-WinGetApps' -Alias 'uwga'
+	Remove-AliasFromProfile -Script 'Update-WinGetApps' -Alias 'wgup'
+	Remove-AliasFromProfile -Script 'Get-WinGetXHelp' -Alias 'wghelp'
+	Remove-AliasFromProfile -Script 'Get-WinGetXHelp' -Alias 'gwgh'
 }
 
 End

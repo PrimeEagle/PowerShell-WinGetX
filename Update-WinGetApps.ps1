@@ -16,36 +16,66 @@
 #>
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Requires -Version 5.0
-[CmdletBinding(SupportsShouldProcess)]
-param ([Parameter()] [switch] $UpdateHelp,
-	   [Parameter(Mandatory = $true)] [string] $ExclusionFilePath)
+[CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
+param (	[Parameter()] [string] $ExclusionFile
+	  )
+DynamicParam { Build-BaseParameters }
 
-Process
+Begin
 {	
-# Read the exclusion patterns from the file
-    $exclusionPatterns = Get-Content $ExclusionFilePath | Where-Object { $_ -ne "" }
+	Write-LogTrace "Execute: $(Get-RootScriptName)"
+	$cmd = @{}
 
-    # Get all updatable packages from winget
-    $updatableApps = winget upgrade --query | Select-String -Pattern '^\s*[^ ]+\s+' -AllMatches | ForEach-Object { $_.Matches[0].Value.Trim() }
-
-    # Filter out the apps that match the exclusion patterns
-    $appsToUpdate = $updatableApps | Where-Object {
-        $app = $_
-        $excluded = $false
-        foreach ($pattern in $exclusionPatterns) {
-            if ($app -like $pattern) {
-                $excluded = $true
-                break
-            }
-        }
-        -not $excluded
-    }
-
-    # Update each app
-    foreach ($app in $appsToUpdate) {
-        Write-Host "Updating $app..."
-        winget upgrade $app
-    }
-
-    Write-Host "Done"
+	if(Get-BaseParamHelpFull) { $cmd.HelpFull = $true }
+	if((Get-BaseParamHelpDetail) -Or ($PSBoundParameters.Count -eq 0)) { $cmd.HelpDetail = $true }
+	if(Get-BaseParamHelpSynopsis) { $cmd.HelpSynopsis = $true }
+	if($cmd.Count -gt 1) { Write-DisplayHelp -Name "$(Get-RootScriptPath)" -HelpDetail }
+	if($cmd.Count -eq 1) { Write-DisplayHelp -Name "$(Get-RootScriptPath)" @cmd }
 }
+Process
+{
+	try
+	{
+		$isDebug = Assert-Debug
+		
+		if(-Not (Assert-PathQueueParameter))
+		{
+			Write-DisplayHelp -Name "$(Get-RootScriptPath)" -HelpDetail
+		}
+	
+		$exclusionPatterns = @()
+		
+		if($ExclusionFile)
+		{
+			$exclusionPatterns = Get-Content $ExclusionFile | Where-Object { $_ -ne "" }
+		}
+		
+		$updatableApps = winget upgrade --query | Select-String -Pattern '^\s*[^ ]+\s+' -AllMatches | ForEach-Object { $_.Matches[0].Value.Trim() }
+
+		$appsToUpdate = $updatableApps | Where-Object {
+			$app = $_
+			$excluded = $false
+			foreach ($pattern in $exclusionPatterns) {
+				if ($app -like $pattern) {
+					$excluded = $true
+					break
+				}
+			}
+			-not $excluded
+		}
+
+		foreach ($app in $appsToUpdate) {
+			Write-Host "Updating $app..."
+			winget upgrade $app
+		}
+	}
+	catch [System.Exception]
+	{
+		Write-DisplayError $PSItem.ToString() -Exit
+	}
+}
+End
+{
+	Write-DisplayHost "Done." -Style Done
+}
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

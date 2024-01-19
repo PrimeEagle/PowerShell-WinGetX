@@ -47,6 +47,11 @@ Process
 {	
 	Add-PathToProfile -PathVariable 'Path' -Path (Get-Location).Path
 	Add-PathToProfile -PathVariable 'PSModulePath' -Path $ModulesPath
+	
+	Add-AliasToProfile -Script 'Update-WinGetApps' -Alias 'uwga'
+	Add-AliasToProfile -Script 'Update-WinGetApps' -Alias 'wgup'
+	Add-AliasToProfile -Script 'Get-WinGetXHelp' -Alias 'wghelp'
+	Add-AliasToProfile -Script 'Get-WinGetXHelp' -Alias 'gwgh'
 }
 
 End
