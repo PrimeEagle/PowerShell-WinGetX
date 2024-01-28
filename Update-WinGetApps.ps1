@@ -39,7 +39,6 @@ Process
 	try
 	{
 		$isDebug = Assert-Debug
-			
 		$exclusionPatterns = @()
 		
 		if($ExclusionFile)
@@ -49,11 +48,14 @@ Process
 		
 		$updatableApps = winget upgrade --query | Select-String -Pattern '^\s*[^ ]+\s+' -AllMatches | ForEach-Object { $_.Matches[0].Value.Trim() }
 
-		$appsToUpdate = $updatableApps | Where-Object {
+		$appsToUpdate = $updatableApps | Where-Object 
+		{
 			$app = $_
 			$excluded = $false
-			foreach ($pattern in $exclusionPatterns) {
-				if ($app -like $pattern) {
+			foreach ($pattern in $exclusionPatterns) 
+			{
+				if ($app -like $pattern) 
+				{
 					$excluded = $true
 					break
 				}
@@ -61,9 +63,13 @@ Process
 			-not $excluded
 		}
 
-		foreach ($app in $appsToUpdate) {
+		foreach ($app in $appsToUpdate) 
+		{
 			Write-Host "Updating $app..."
-			winget upgrade $app
+			if ($PSCmdlet.ShouldProcess($app, 'WinGet upgrade.')) 
+			{
+				winget upgrade $app
+			}
 		}
 	}
 	catch [System.Exception]
